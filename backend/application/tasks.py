@@ -61,7 +61,7 @@ def send_mail_no_orders_today():
 
         # Find the users who haven't placed any orders today
         users_without_orders_today = [user.user_name for user in all_users if user.user_name not in [order.user_name for order in orders_today]]
-        users_without_orders_today.append('arjunpukale@gmail.com')
+        users_without_orders_today.append('abc@gmail.com')
         print("users_without_orders_today::", users_without_orders_today)
         logger.info("users_without_orders_today::"+ str(users_without_orders_today))
         subject='No Orders Today'
@@ -69,7 +69,7 @@ def send_mail_no_orders_today():
         for user in users_without_orders_today:
             try:
                 recipients = [user]
-                message = Message(subject=subject, recipients=recipients, body=body, sender='arjunpukale@gmail.com')
+                message = Message(subject=subject, recipients=recipients, body=body, sender='abc@gmail.com')
                 mail.send(message)
                 break #temporary
             except Exception as e:
@@ -170,8 +170,8 @@ def send_order_report():
             body = f"Dear {user.first_name},\n\nPlease find attached your order report for the current month.\n\nBest regards,\nYour App Team"
 
             try:
-                recipients = [user.user_name, "arjunpukale@gmail.com"]
-                message = Message(subject=subject, recipients=recipients, body=body, sender='arjunpukale@gmail.com')
+                recipients = [user.user_name]
+                message = Message(subject=subject, recipients=recipients, body=body, sender='abc@gmail.com')
                 message.attach("order_report.tsv", "text/tab-separated-values", tsv_data)
                 mail.send(message)
                 break  # temporary
