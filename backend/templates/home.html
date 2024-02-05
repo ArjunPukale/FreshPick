@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FreshPick</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
+      crossorigin="anonymous"
+    />
+    <style>
+      .firstname-top {
+        margin-top: 50px;
+      }
+      /* .card {
+        margin-bottom: 20px;
+        width: auto;
+      } */
+      .card-body {
+        font-size: small;
+      }
+      .card-img-top {
+        height: 120px;
+      }
+      .original-price {
+        text-decoration: line-through;
+      }
+      .discount-label {
+        position: absolute;
+        top: 5; /* Adjust the top and right values for positioning */
+        right: 5;
+        background-color: #127418; /* Adjust the background color of the label */
+        color: #ffffff; /* Adjust the text color of the label */
+        padding: 3px 5px; /* Adjust the padding as needed */
+        font-weight: bold;
+      }
+      body {
+        background-color: beige;
+      }
+      .card-container {
+        /* display: flex; */
+        flex-wrap: wrap;
+        margin-left: 50px;
+        margin-right: 50px;
+      }
+
+      .card-equal-height {
+        display: flex;
+        max-width: fit-content;
+      }
+
+      .card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        width: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg fixed-top"
+      style="background-color: #cbfaa2"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">FreshPick</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarText"
+          aria-controls="navbarText"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/home"
+                >Home</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/basket">Basket</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/orders">Orders</a>
+            </li>
+          </ul>
+          <span class="navbar-text">
+            <a href="{{ url_for('logout') }}">Logout</a>
+          </span>
+        </div>
+      </div>
+    </nav>
+    <h5 class="display-6 firstname-top">
+      Welcome {{current_user.first_name}} !
+    </h5>
+
+    <!--Search Box-->
+    <div class="row justify-content-md-center">
+      <div class="col-6">
+        <form
+          action="{{ url_for('search') }}"
+          method="POST"
+          class="form-inline"
+        >
+          <div class="row">
+            <div class="col" style="padding-right: 0px">
+              <div class="form-group">
+                <input
+                  type="text"
+                  name="query"
+                  class="form-control form-control-lg"
+                  placeholder="Search for products..."
+                  required
+                />
+              </div>
+            </div>
+            <div class="col-auto" style="padding-left: 0px">
+              <button type="submit" class="btn btn-outline-secondary btn-lg">
+                Search
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Product listing by category -->
+    {% for category in categories %}
+    <!-- <div class="container"> -->
+    <div class="card-container">
+      <h6 class="display-6">{{ category["category_name"] | upper}}</h6>
+      {% if not searchCat %}
+      <div class="row">
+        {% for product in category.products[0:9] %}
+        <div class="col-md-3 card-equal-height">
+          <div class="card">
+            <img
+              src="{{ url_for('static', filename='images/'+product.product_img) }}"
+              class="card-img-top"
+              alt="{{ product.product_name | upper}}"
+            />
+            <div class="discount-label">
+              {{getDiscount(product.product_id)}}% off
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">{{ product["product_name"] | upper}}</h5>
+              {% if product["veg_nveg"] == "V" %}
+              <span class="badge bg-success">Veg</span>
+              {% else %}
+              <span class="badge bg-danger">NonVeg</span>
+              {% endif %}
+              <p class="card-text">
+                {{ product["product_desc"] | truncate(40)}}
+              </p>
+              <p>
+                <span class="original-price"
+                  >&#x20B9;{{ getOGPrice(product.product_id) | round(2)}}</span
+                >
+                <span class="discounted-price"
+                  >&#x20B9;{{
+                  discountedPrice(getOGPrice(product.product_id),getDiscount(product.product_id))
+                  | round(2)}}</span
+                >
+                <span class="product-unit">per {{product.product_unit}}</span>
+                <!-- <span class="discounted-label">(25% off)</span> -->
+              </p>
+
+              <!-- Replace 'bg-success' with 'bg-danger' for Non-Veg -->
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <button
+                    class="btn btn-outline-primary minusBtn"
+                    type="button"
+                  >
+                    -
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  class="form-control quantityInput"
+                  value="1"
+                  readonly
+                />
+                <div class="input-group-append">
+                  <button class="btn btn-outline-primary plusBtn" type="button">
+                    +
+                  </button>
+                </div>
+              </div>
+              {% if getStockQty(product.product_id) != 0 %}
+              <button
+                class="btn btn-primary addToBasketBtn"
+                data-product-id="{{product.product_id}}"
+                data-product-unit="{{product.product_unit}}"
+              >
+                Add to Basket
+              </button>
+              {% else %}
+              <button class="btn btn-secondary" disabled>Not Available</button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Add more product cards here -->
+        {% endfor %}
+      </div>
+      {% else %}
+      <!-- For category specific (view more)-->
+      <div class="row">
+        {% for product in category.products %}
+        <div class="col-md-2">
+          <div class="card">
+            <img
+              src="{{ url_for('static', filename='images/'+product.product_img) }}"
+              class="card-img-top"
+              alt="{{ product.product_name | upper}}"
+            />
+            <div class="discount-label">
+              {{getDiscount(product.product_id)}}% off
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">{{ product["product_name"] | upper}}</h5>
+              {% if product["veg_nveg"] == "V" %}
+              <span class="badge bg-success">Veg</span>
+              {% else %}
+              <span class="badge bg-danger">NonVeg</span>
+              {% endif %}
+              <p class="card-text">
+                {{ product["product_desc"] | truncate(40)}}
+              </p>
+              <p>
+                <span class="original-price"
+                  >&#x20B9;{{ getOGPrice(product.product_id) | round(2)}}</span
+                >
+                <span class="discounted-price"
+                  >&#x20B9;{{
+                  discountedPrice(getOGPrice(product.product_id),getDiscount(product.product_id))
+                  | round(2)}}</span
+                >
+                <span class="product-unit">per {{product.product_unit}}</span>
+                <!-- <span class="discounted-label">(25% off)</span> -->
+              </p>
+
+              <!-- Replace 'bg-success' with 'bg-danger' for Non-Veg -->
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <button
+                    class="btn btn-outline-primary minusBtn"
+                    type="button"
+                  >
+                    -
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  class="form-control quantityInput"
+                  value="1"
+                  readonly
+                />
+                <div class="input-group-append">
+                  <button class="btn btn-outline-primary plusBtn" type="button">
+                    +
+                  </button>
+                </div>
+              </div>
+              <button
+                class="btn btn-primary addToBasketBtn"
+                data-product-id="{{product.product_id}}"
+                data-product-unit="{{product.product_unit}}"
+              >
+                Add to Basket
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add more product cards here -->
+        {% endfor %}
+      </div>
+      {% endif %} {% if not searchCat %}
+      <div class="row mt-3">
+        <div class="col-md-12 text-center">
+          <a
+            href="/home?categoryId={{category.category_id}}"
+            class="btn btn-outline-success"
+            >View More</a
+          >
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <hr class="hr hr-blurry" />
+    {% endfor %}
+    <!-- Product listing by category ends-->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        // Quantity controls
+        $(".plusBtn").click(function () {
+          var $card = $(this).closest(".card");
+          var quantity = parseInt($card.find(".quantityInput").val());
+          $card.find(".quantityInput").val(quantity + 1);
+        });
+
+        $(".minusBtn").click(function () {
+          var $card = $(this).closest(".card");
+          var quantity = parseInt($card.find(".quantityInput").val());
+          if (quantity > 1) {
+            $card.find(".quantityInput").val(quantity - 1);
+          }
+        });
+
+        // Add to Cart button
+        $(".addToBasketBtn").click(function () {
+          var $card = $(this).closest(".card");
+          var quantity = parseInt($card.find(".quantityInput").val());
+          var productName = $card.find(".card-title").text();
+          var price = parseFloat(
+            $card.find(".discounted-price").text().replace("₹", "")
+          );
+          var productId = $(this).data("product-id");
+          var totalPrice = price * quantity;
+          var product_unit = $(this).data("product-unit"); // $card.find(".product-unit").text();
+          // You can perform further logic here, like adding the item to a cart or displaying a success message.
+          console.log("Product Name: " + productName);
+          console.log("Quantity: " + quantity);
+          console.log("Total Price: ₹" + totalPrice.toFixed(2));
+          //create json for ajax request
+          var basketData = {
+            username: "{{current_user.user_name}}",
+            productId: productId,
+            quantity: quantity,
+          };
+
+          $.ajax({
+            type: "POST",
+            url: "/addToBasket",
+            data: JSON.stringify(basketData),
+            contentType: "application/json",
+            dataType: "json",
+            success: function (result) {
+              console.log("Result:");
+              console.log(result);
+              if (result.code == "S") {
+                msg =
+                  "Successfully added " +
+                  quantity +
+                  " " +
+                  product_unit +
+                  " " +
+                  productName +
+                  " in your basket!";
+              } else if (result.code == "D") {
+                msg = productName + " already exists in your basket!";
+              } else if (result.code == "O") {
+                msg =
+                  "Selected QTY is more than the available qty:" +
+                  result.availQTY;
+              } else {
+                msg = "something went wrong !";
+              }
+              alert(msg);
+              //console.log("{{current_user.basket_items}}");
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Category Management</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
+      crossorigin="anonymous"
+    />
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <style>
+      /* Custom CSS for scrollable table body */
+      .table-wrapper {
+        max-height: 600px; /* Set your desired height here */
+        overflow-y: auto;
+      }
+
+      /* Fix the table header */
+      .fixed-header {
+        position: sticky;
+        top: 0;
+        background-color: #f9f9f9;
+        z-index: 1;
+      }
+      body {
+        background-color: beige;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg fixed-top"
+      style="background-color: darkkhaki"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">FreshPick-Admin</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarText"
+          aria-controls="navbarText"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a
+                class="nav-link active"
+                aria-current="page"
+                href="/admin/category"
+                >Category Management</a
+              >
+            </li>
+            <!-- <li class="nav-item">
+            <a class="nav-link active" href="/admin/category"
+              >Category Management</a
+            >
+          </li> -->
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/product">Product Management</a>
+            </li>
+          </ul>
+          <span class="navbar-text">
+            <a href="{{ url_for('logout') }}">Logout</a>
+          </span>
+        </div>
+      </div>
+    </nav>
+    <div class="container mt-4">
+      <h2 style="margin-top: 60px">Category Management</h2>
+      <!-- Add New Category Button -->
+      <a href="{{ url_for('addCategory')}}" class="btn btn-primary mb-2"
+        >Add New Category</a
+      >
+      <!-- Search Bar -->
+      <form class="form-inline mb-2">
+        <input
+          class="form-control mr-sm-2"
+          type="search"
+          placeholder="Search Category"
+          aria-label="Search"
+          id="searchInput"
+        />
+        <button
+          class="btn btn-outline-success my-2 my-sm-0"
+          type="button"
+          onclick="searchCategories()"
+        >
+          Search
+        </button>
+      </form>
+      <!-- Table -->
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table class="table table-bordered">
+          <thead style="background-color: burlywood">
+            <tr>
+              <th>Category ID</th>
+              <th>Category Name</th>
+              <th># Products</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for category in Categories %}
+            <tr>
+              <td>{{category.category_id}}</td>
+              <td>{{category.category_name | upper}}</td>
+              <td>{{category.products | length }}</td>
+
+              <td>
+                <a
+                  class="btn btn-primary btn-sm"
+                  href="/admin/editCategory/{{category.category_id}}"
+                  >Edit</a
+                >
+                <button
+                  class="btn btn-danger btn-sm"
+                  onclick="deleteCategory({{category.category_id}})"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+            <!-- Add more rows for other products here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS (optional) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      function searchCategories() {
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("searchInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementsByTagName("table")[0];
+        tr = table.getElementsByTagName("tr");
+        for (i = 1; i < tr.length; i++) {
+          // Start from 1 to skip the table header row
+          td = tr[i].getElementsByTagName("td")[1]; // Index 1 corresponds to the "Name" column
+          if (td) {
+            txtValue = td.textContent || td.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+              tr[i].style.display = "";
+            } else {
+              tr[i].style.display = "none";
+            }
+          }
+        }
+      }
+
+      function deleteCategory(category_id) {
+        const confirmation = confirm("Do you want to delete this Category?");
+
+        // If the user clicked "OK" in the confirm dialog, proceed with the delete action
+        if (confirmation) {
+          console.log("Deleting Category with category_id:" + category_id);
+          $.ajax({
+            url: "/admin/deleteCategory", // Replace with the appropriate endpoint
+            method: "POST",
+            data: JSON.stringify({ categoryId: category_id }),
+            contentType: "application/json",
+            success: function (response) {
+              // Handle the response if needed
+              if (response.code == "S") {
+                alert("Category deleted successfully");
+                //row.remove();
+                location.reload();
+              } else {
+                alert("Something went wrong !");
+              }
+            },
+            error: function (error) {
+              // Handle the error if needed
+              console.error(
+                "Error occured while deleting the Category:",
+                error
+              );
+            },
+          });
+        } else {
+          // If the user clicked "Cancel" in the confirm dialog, do nothing or handle as desired.
+          console.log("Delete operation canceled.");
+        }
+      }
+    </script>
+  </body>
+</html>

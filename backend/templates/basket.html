@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FreshPick</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
+      crossorigin="anonymous"
+    />
+    <style>
+      .original-price {
+        text-decoration: line-through;
+      }
+      body {
+        background-color: beige;
+      }
+      .disabled {
+        /* Add your disabled styles here, e.g., change color, cursor, etc. */
+        pointer-events: none; /* This prevents any mouse interaction with the element */
+        text-decoration: none; /* Optionally, remove the underline */
+        color: #999; /* Optionally, change the color to a muted tone */
+        cursor: not-allowed; /* Optionally, change the cursor to indicate it's not clickable */
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg fixed-top"
+      style="background-color: #cbfaa2"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">FreshPick</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarText"
+          aria-controls="navbarText"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="/home">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="/basket">Basket</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/orders">Orders</a>
+            </li>
+          </ul>
+          <span class="navbar-text">
+            <a href="{{ url_for('logout') }}">Logout</a>
+          </span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      {% if noData %}
+      <h1 style="margin-top: 100px">Basket is empty :(</h1>
+      {% else %}
+      <h1 style="margin-top: 50px">My Basket</h1>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Image</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody data-user-name="{{current_user.user_name}}">
+          <!-- Populate basket items-->
+          {% for item in basketItems %}
+          <tr>
+            <td data-item-id="{{item.item_id}}">
+              {{item.product["product_name"] | upper}}
+            </td>
+            <td>
+              <img
+                src="{{ url_for('static', filename='images/'+item.product.product_img) }}"
+                alt="Product 1"
+                width="50"
+                height="50"
+              />
+            </td>
+            <td>
+              <span class="original-price"
+                >&#x20B9;{{ getOGPrice(item.product.product_id) |
+                round(2)}}</span
+              >
+              <span>
+                &#x20B9;{{
+                discountedPrice(getOGPrice(item.product.product_id),getDiscount(item.product.product_id))
+                | round(2)}}</span
+              >
+            </td>
+            <td>
+              <input
+                type="number"
+                min="1"
+                value="{{item.qty}}"
+                class="form-control quantity-input"
+              />
+            </td>
+            <td class="total-price">
+              &#x20B9;{{
+              (discountedPrice(getOGPrice(item.product.product_id),getDiscount(item.product.product_id))*item.qty)
+              | round(2)}}
+            </td>
+
+            <td>
+              <button class="btn btn-danger btn-sm remove-btn">Remove</button>
+            </td>
+          </tr>
+          {% endfor %}
+          <!-- Populate basket items ends-->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" align="right"><strong>Total Price:</strong></td>
+            <td class="grand-total" colspan="2">
+              <strong>&#x20B9;{{totalPrice | round(2)}}</strong>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4" align="right"><strong>Total Discount:</strong></td>
+            <td class="total-discount" colspan="2">
+              <strong>&#x20B9;{{totalDiscount | round(2)}}</strong>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="6" align="right">
+              <button class="btn btn-primary" id="saveBasket">Save Cart</button>
+              <a href="/orderConfirmation" id="placeOrderLink">
+                <button class="btn btn-success" id="placeOrder1">
+                  Place Order
+                </button>
+              </a>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+      {% endif %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+      // Get all the quantity inputs, remove buttons, and total elements
+      const quantityInputs = document.querySelectorAll(".quantity-input");
+      const removeButtons = document.querySelectorAll(".remove-btn");
+      const totalElements = document.querySelectorAll(".total-price");
+      const grandTotalElement = document.querySelector(".grand-total");
+      const saveButton = document.getElementById("saveBasket");
+      const placeOrderButton1 = document.getElementById("placeOrder1");
+      const placeOrderLink = document.getElementById("placeOrderLink");
+
+      // Helper function to enable/disable the place order button
+      function togglePlaceOrderButton(disable) {
+        placeOrderButton1.disabled = disable;
+        if (disable) {
+          placeOrderLink.classList.add("disabled");
+        } else {
+          placeOrderLink.classList.remove("disabled");
+        }
+      }
+
+      // Add event listeners to quantity input fields
+      quantityInputs.forEach((input) => {
+        input.addEventListener("change", () => {
+          // Disable place order button on quantity change
+          togglePlaceOrderButton(true);
+        });
+      });
+
+      // Add event listeners to the remove buttons
+      removeButtons.forEach((button) => {
+        button.addEventListener("click", removeItem);
+      });
+      // Function to remove the item from the cart
+      function removeItem(event) {
+        const row = event.target.parentElement.parentElement;
+        const itemId = row.querySelector("td").getAttribute("data-item-id");
+        console.log("removing item: " + itemId);
+        // Send the AJAX POST request to delete the item
+        $.ajax({
+          url: "/deleteFromBasket", // Replace with the appropriate endpoint
+          method: "POST",
+          data: JSON.stringify({ itemId: itemId }),
+          contentType: "application/json",
+          success: function (response) {
+            // Handle the response if needed
+            if (response.code == "S") {
+              alert("Item deleted successfully");
+              //row.remove();
+              row.remove();
+              // Disable place order button on remove item
+              togglePlaceOrderButton(true);
+              //location.reload();
+            } else {
+              alert("Something went wrong !");
+            }
+          },
+          error: function (error) {
+            // Handle the error if needed
+            console.error("Error deleting item:", error);
+          },
+        });
+      }
+      // Add event listener to the save button
+      if (saveButton) {
+        saveButton.addEventListener("click", saveCart);
+      }
+      // Function to save the cart
+      function saveCart() {
+        const cartItems = [];
+
+        // Loop through each row and extract the product ID and quantity
+        document.querySelectorAll("tbody tr").forEach((row) => {
+          const itemId = row.querySelector("td").getAttribute("data-item-id");
+
+          const quantity = parseInt(row.querySelector(".quantity-input").value);
+
+          cartItems.push({
+            itemId: itemId,
+            quantity: quantity,
+          });
+        });
+
+        // Send the cart items via AJAX POST request
+        $.ajax({
+          url: "/saveBasket",
+          method: "POST",
+          data: JSON.stringify(cartItems),
+          contentType: "application/json",
+          success: function (response) {
+            if (response.code == "S") {
+              // Handle the response if needed
+              if (response.OFS.length >= 1) {
+                alert(
+                  "The selected qty for following items is more than available stock: " +
+                    response.OFS
+                );
+              } else {
+                alert("Cart saved successfully");
+                togglePlaceOrderButton(false); //enable place order button
+                location.reload();
+              }
+
+              // location.reload(); // Reload the page
+            } else {
+              alert("Some error occured !");
+            }
+          },
+          error: function (error) {
+            // Handle the error if needed
+            console.error("Error saving cart:", error);
+          },
+        });
+      }
+
+      //Place order////////////////
+      // Add event listener to the place order button
+      if (placeOrderButton) {
+        placeOrderButton.addEventListener("click", placeOrder);
+      }
+      // Function to  place the order
+      function placeOrder() {
+        const orderReq = {};
+        const user_name = row
+          .querySelector("tbody")
+          .getAttribute("data-user-name");
+        orderReq["user_name"] = user_name;
+
+        // Send the cart items via AJAX POST request
+        $.ajax({
+          url: "/placeOrder",
+          method: "POST",
+          data: JSON.stringify(orderReq),
+          contentType: "application/json",
+          success: function (response) {
+            if (response.code == "S") {
+              // Handle the response if needed
+              if (response.OFS.length >= 1) {
+                alert(
+                  "The select qty for following items is more than available stock: " +
+                    response.OFS
+                );
+              } else {
+                //redirect to order confirmation page
+                window.location.href = "/orderConfirmation";
+              }
+
+              // location.reload(); // Reload the page
+            } else if (response.code == "ND") {
+              alert("Basket is empty !");
+            } else {
+              alert("Some error occured !");
+            }
+          },
+          error: function (error) {
+            // Handle the error if needed
+            console.error("Error in  place order", error);
+          },
+        });
+      }
+
+      //Place Order-ends///////////////
+
+      // Add event listeners to the quantity inputs
+      // quantityInputs.forEach((input) => {
+      //   input.addEventListener(
+      //     "change",
+      //     updateTotal.bind(null, input.parentElement.parentElement)
+      //   );
+      // });
+
+      // // Function to update the total price for a row
+      // function updateTotal(row) {
+      //   const quantityInput = row.querySelector(".quantity-input");
+      //   const price = parseFloat(
+      //     row.querySelector(".price").textContent.replace("$", "")
+      //   );
+      //   const quantity = parseInt(quantityInput.value);
+      //   const totalElement = row.querySelector(".total-price");
+      //   const total = price * quantity;
+      //   totalElement.textContent = "$" + total.toFixed(2);
+      //   calculateGrandTotal();
+      // }
+
+      // // Function to calculate the grand total price
+      // function calculateGrandTotal() {
+      //   let grandTotal = 0;
+      //   totalElements.forEach((element) => {
+      //     const total = parseFloat(element.textContent.replace("₹", ""));
+      //     grandTotal += total;
+      //   });
+      //   grandTotalElement.textContent = "₹" + grandTotal.toFixed(2);
+      // }
+    </script>
+  </body>
+</html>

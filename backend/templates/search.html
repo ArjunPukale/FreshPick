@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FreshPick</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.min.css"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/bootstrap-slider.min.js"></script>
+    <style>
+      .firstname-top {
+        margin-top: 50px;
+      }
+      .card {
+        margin-bottom: 20px;
+        width: auto;
+      }
+      .card-body {
+        font-size: small;
+      }
+      .card-img-top {
+        height: 120px;
+      }
+      .original-price {
+        text-decoration: line-through;
+      }
+      .discount-label {
+        position: absolute;
+        top: 5; /* Adjust the top and right values for positioning */
+        right: 5;
+        background-color: #127418; /* Adjust the background color of the label */
+        color: #ffffff; /* Adjust the text color of the label */
+        padding: 3px 5px; /* Adjust the padding as needed */
+        font-weight: bold;
+      }
+      body {
+        background-color: beige;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg fixed-top"
+      style="background-color: #cbfaa2"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">FreshPick</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarText"
+          aria-controls="navbarText"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/home"
+                >Home</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/basket">Basket</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Orders</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!--Search Box-->
+    <div class="container">
+      <div class="row justify-content-md-center" style="margin-top: 60px">
+        <div class="col-6">
+          <form action="{{ url_for('search') }}" method="GET">
+            <div class="form-row align-items-center">
+              <div class="col-auto">
+                <select class="form-control mb-2" name="category">
+                  <option value="">All Categories</option>
+                  <option value="clothing">Clothing</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="books">Books</option>
+                </select>
+              </div>
+              <div class="col">
+                <input
+                  type="text"
+                  class="form-control mb-2"
+                  name="search"
+                  placeholder="Search for products"
+                />
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-primary mb-2">
+                  Search
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-primary mt-3"
+              data-toggle="collapse"
+              data-target="#filterPanel"
+              data-parent=".container"
+              onclick="resetFilters()"
+            >
+              Advanced Filter
+            </button>
+            <div id="filterPanel" class="collapse mt-3">
+              <div class="card card-body">
+                <div class="form-group">
+                  <label for="priceRange">Price Range:</label>
+                  <input
+                    type="text"
+                    id="priceRangeValues"
+                    readonly
+                    style="border: 0; color: #f6931f; font-weight: bold"
+                  />
+                  <input
+                    type="text"
+                    class="slider"
+                    id="priceRange"
+                    data-slider-min="0"
+                    data-slider-max="1000"
+                    data-slider-step="1"
+                    data-slider-value="[0,1000]"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="minDiscount">Minimum Discount:</label>
+                  <input
+                    type="text"
+                    id="minDiscountValue"
+                    readonly
+                    style="border: 0; color: #f6931f; font-weight: bold"
+                  />
+                  <input
+                    type="text"
+                    class="slider"
+                    id="minDiscount"
+                    data-slider-min="0"
+                    data-slider-max="100"
+                    data-slider-step="1"
+                    data-slider-value="0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Vegetarian/Non-Vegetarian:</label><br />
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="vegNonveg"
+                      id="veg"
+                      value="vegetarian"
+                    />
+                    <label class="form-check-label" for="veg">Vegetarian</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="vegNonveg"
+                      id="nonVeg"
+                      value="non-vegetarian"
+                    />
+                    <label class="form-check-label" for="nonVeg"
+                      >Non-Vegetarian</label
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <br />
+    <!-- Product listing by category -->
+
+    <div class="container">
+      <div class="row">
+        {% for product in products %}
+        <div class="col-md-2">
+          <div class="card">
+            <img
+              src="{{ url_for('static', filename='images/'+product.product_img) }}"
+              class="card-img-top"
+              alt="{{ product.product_name | upper}}"
+            />
+            <div class="discount-label">
+              {{getDiscount(product.product_id)}}% off
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">{{ product["product_name"] | upper}}</h5>
+              <p>
+                <strong>Category: </strong
+                >{{product['product_category'].category_name}}
+              </p>
+              {% if product["veg_nveg"] == "V" %}
+              <span class="badge bg-success">Veg</span>
+              {% else %}
+              <span class="badge bg-danger">NonVeg</span>
+              {% endif %}
+              <p class="card-text">
+                {{ product["product_desc"] | truncate(40)}}
+              </p>
+              <p>
+                <span class="original-price"
+                  >&#x20B9;{{ getOGPrice(product.product_id) | round(2)}}</span
+                >
+                <span class="discounted-price"
+                  >&#x20B9;{{
+                  discountedPrice(getOGPrice(product.product_id),getDiscount(product.product_id))
+                  | round(2)}}</span
+                >
+                <span class="product-unit">per {{product.product_unit}}</span>
+                <!-- <span class="discounted-label">(25% off)</span> -->
+              </p>
+
+              <!-- Replace 'bg-success' with 'bg-danger' for Non-Veg -->
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <button
+                    class="btn btn-outline-primary minusBtn"
+                    type="button"
+                  >
+                    -
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  class="form-control quantityInput"
+                  value="1"
+                  readonly
+                />
+                <div class="input-group-append">
+                  <button class="btn btn-outline-primary plusBtn" type="button">
+                    +
+                  </button>
+                </div>
+              </div>
+              <button
+                class="btn btn-primary addToBasketBtn"
+                data-product-id="{{product.product_id}}"
+                data-product-unit="{{product.product_unit}}"
+              >
+                Add to Basket
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add more product cards here -->
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Product listing by category ends-->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+      // Initialize price range slider
+      var priceSlider = new Slider("#priceRange", {
+        tooltip: "always",
+        tooltip_split: true,
+        formatter: function (value) {
+          return "₹" + value;
+        },
+      });
+
+      // Update price range values
+      priceSlider.on("slide", function (value) {
+        $("#priceRangeValues").val("₹" + value[0] + " - ₹" + value[1]);
+      });
+
+      // Initialize min discount slider
+      var minDiscountSlider = new Slider("#minDiscount", {
+        tooltip: "always",
+        formatter: function (value) {
+          return value + "%";
+        },
+      });
+
+      // Update min discount value
+      minDiscountSlider.on("slide", function (value) {
+        $("#minDiscountValue").val(value + "%");
+      });
+
+      // Function to reset filter options
+      function resetFilters() {
+        // Reset price range slider
+        priceSlider.setValue([0, 1000]);
+        $("#priceRangeValues").val("$0 - $1000");
+
+        // Reset min discount slider
+        minDiscountSlider.setValue(0);
+        $("#minDiscountValue").val("0%");
+
+        // Reset vegetarian/non-vegetarian radio buttons
+        $("input[name=vegNonveg]").prop("checked", false);
+      }
+    </script>
+    <script>
+      $(document).ready(function () {
+        // Quantity controls
+        $(".plusBtn").click(function () {
+          var $card = $(this).closest(".card");
+          var quantity = parseInt($card.find(".quantityInput").val());
+          $card.find(".quantityInput").val(quantity + 1);
+        });
+
+        $(".minusBtn").click(function () {
+          var $card = $(this).closest(".card");
+          var quantity = parseInt($card.find(".quantityInput").val());
+          if (quantity > 1) {
+            $card.find(".quantityInput").val(quantity - 1);
+          }
+        });
+
+        // Add to Cart button
+        $(".addToBasketBtn").click(function () {
+          var $card = $(this).closest(".card");
+          var quantity = parseInt($card.find(".quantityInput").val());
+          var productName = $card.find(".card-title").text();
+          var price = parseFloat(
+            $card.find(".discounted-price").text().replace("₹", "")
+          );
+          var productId = $(this).data("product-id");
+          var totalPrice = price * quantity;
+          var product_unit = $(this).data("product-unit"); // $card.find(".product-unit").text();
+          // You can perform further logic here, like adding the item to a cart or displaying a success message.
+          console.log("Product Name: " + productName);
+          console.log("Quantity: " + quantity);
+          console.log("Total Price: ₹" + totalPrice.toFixed(2));
+          //create json for ajax request
+          var basketData = {
+            username: "{{current_user.user_name}}",
+            productId: productId,
+            quantity: quantity,
+          };
+
+          $.ajax({
+            type: "POST",
+            url: "/addToBasket",
+            data: JSON.stringify(basketData),
+            contentType: "application/json",
+            dataType: "json",
+            success: function (result) {
+              console.log("Result:");
+              console.log(result);
+              if (result.code == "S") {
+                msg =
+                  "Successfully added " +
+                  quantity +
+                  " " +
+                  product_unit +
+                  " " +
+                  productName +
+                  " in your basket!";
+              } else if (result.code == "D") {
+                msg = productName + " already exists in your basket!";
+              } else if (result.code == "O") {
+                msg =
+                  "Selected QTY is more than the available qty:" +
+                  result.availQTY;
+              } else {
+                msg = "something went wrong !";
+              }
+              alert(msg);
+              //console.log("{{current_user.basket_items}}");
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

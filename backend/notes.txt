@@ -1,0 +1,32 @@
+Redis instal:
+$ sudo apt-add-repository ppa:redislabs/redis
+$ sudo apt-get update
+$ sudo apt-get upgrade
+$ sudo apt-get install redis-server
+
+$ sudo service redis-server start
+$ sudo service redis-server stop
+$ sudo service redis-server restart
+
+to run the redis server (in wsl)
+redis-server
+
+pip install celery[redis]
+
+to run celery workers:
+celery -A main.celery worker --pool=solo -l INFO
+
+to run celery beat
+celery -A main.celery beat --max-interval 1 --loglevel=info
+
+
+wsl:
+cd /mnt/g/My\ Drive/IITM\ Diploma/Term4/week_3/screencast/.exp2-env/Scripts
+source activate
+
+cd /mnt/d/IITM_DIPLOMA/Term6/MAD2_Project/MAD1_project_submission_22dp1000099/code
+
+/mnt/g/My\ Drive/IITM\ Diploma/Term4/week_3/screencast/.exp2-env/Scripts/celery.exe -A main.celery worker  --pool=solo -l INFO
+
+/mnt/g/My\ Drive/IITM\ Diploma/Term4/week_3/screencast/.exp2-env/Scripts/celery.exe -A main.celery beat --max-interval 1 --loglevel=info
+
