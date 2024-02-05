@@ -44,8 +44,8 @@ app.config['PROPAGATE_EXCEPTIONS'] = True
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'arjunpukale@gmail.com'
-app.config['MAIL_PASSWORD'] = 'wanj ldin svty ujcf'
+app.config['MAIL_USERNAME'] = 'abc@gmail.com'
+app.config['MAIL_PASSWORD'] = 'enter your mail password'
 
 #db = SQLAlchemy()
 bcrypt = Bcrypt(app)
