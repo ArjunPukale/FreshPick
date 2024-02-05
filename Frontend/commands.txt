@@ -1,0 +1,5 @@
+npm i vue-router --save
+
+vue add router
+npm i axios --save
+npm install vuex@next --save
